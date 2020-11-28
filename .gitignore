@@ -1,0 +1,8 @@
+.idea
+vendor/
+_*
+*.test
+.DS_Store
+engine
+bin/
+config.json
