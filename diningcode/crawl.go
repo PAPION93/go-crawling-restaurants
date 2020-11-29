@@ -2,7 +2,6 @@ package diningcode
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -45,7 +44,6 @@ func (r *originalDiningcodeRepository) Crawl() (restaurant []restaurantInfo) {
 
 			// Request the HTML page.
 			res, err := http.Get("https://www.diningcode.com/list.php?query=" + val + "&page=" + strconv.Itoa(page))
-			fmt.Println("https://www.diningcode.com/list.php?query=" + val + "&page=" + strconv.Itoa(page))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -60,7 +58,7 @@ func (r *originalDiningcodeRepository) Crawl() (restaurant []restaurantInfo) {
 				log.Fatal(err)
 			}
 
-			// Find the review items
+			// Find the restaurant items
 			doc.Find("#div_list li").Each(func(i int, s *goquery.Selection) {
 				name := s.Find(".btxt").Text()
 				point := s.Find(".point").Text()
