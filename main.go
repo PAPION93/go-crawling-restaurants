@@ -1,13 +1,14 @@
 package main
 
 import (
-	"log"
-
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
-	"tmwuw.com/common"
+	"tmwuw.com/database"
 	"tmwuw.com/diningcode"
+	"tmwuw.com/domain"
+	"tmwuw.com/restaurant/repository"
+	"tmwuw.com/restaurant/usecase"
 )
 
 func init() {
@@ -20,14 +21,14 @@ func init() {
 
 func main() {
 
-	dbConn := common.TestDBInit()
-	defer func() {
-		err := dbConn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	a := database.Config{}
+	// a.DBInit()
+	a.TestDBInit()
+	defer a.DBClose(a.DB)
+	a.DB.AutoMigrate(&domain.Restaurant{})
 
-	diningcodeRepo := diningcode.NewDiningcodeRepository(dbConn)
+	rr := repository.NewRestaurantRepository(a.DB)
+	ur := usecase.NewRestaurantUsecase(rr)
+	diningcodeRepo := diningcode.NewDiningcode(ur)
 	diningcodeRepo.Crawl()
 }

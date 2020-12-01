@@ -1,7 +1,6 @@
 package diningcode
 
 import (
-	"database/sql"
 	"log"
 	"net/http"
 	"strconv"
@@ -9,21 +8,22 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/spf13/viper"
+	"tmwuw.com/domain"
 )
 
-// DiningcodeRepository interface
-type DiningcodeRepository interface {
-	Crawl() []restaurantInfo
+// Diningcode interface
+type Diningcode interface {
+	Crawl()
 }
 
-type originalDiningcodeRepository struct {
-	DB *sql.DB
+type diningcode struct {
+	ru domain.RestaurantUsecase
 }
 
-// NewDiningcodeRepository ...
-func NewDiningcodeRepository(db *sql.DB) DiningcodeRepository {
-	return &originalDiningcodeRepository{
-		DB: db,
+// NewDiningcode ...
+func NewDiningcode(ru domain.RestaurantUsecase) Diningcode {
+	return &diningcode{
+		ru,
 	}
 }
 
@@ -36,7 +36,7 @@ type restaurantInfo struct {
 }
 
 // Scrape Diningcode
-func (r *originalDiningcodeRepository) Crawl() (restaurant []restaurantInfo) {
+func (d *diningcode) Crawl() {
 
 	subway := viper.GetStringMapString(`subway`)
 	for _, val := range subway {
@@ -74,11 +74,9 @@ func (r *originalDiningcodeRepository) Crawl() (restaurant []restaurantInfo) {
 
 					point = strings.Split(point, "점")[0]
 
-					restaurant = append(restaurant, restaurantInfo{name: name, point: point, address: address, addressDetail: addressDetail})
+					d.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address, AddressDetail: addressDetail})
 				}
 			})
 		}
 	}
-
-	return restaurant
 }

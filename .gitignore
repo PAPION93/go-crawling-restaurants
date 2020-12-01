@@ -7,3 +7,4 @@ engine
 bin/
 config.json
 .vscode
+*.db
