@@ -4,6 +4,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
 	"tmwuw.com/common"
 	"tmwuw.com/diningcode"
@@ -19,7 +20,7 @@ func init() {
 
 func main() {
 
-	dbConn := common.Init()
+	dbConn := common.TestDBInit()
 	defer func() {
 		err := dbConn.Close()
 		if err != nil {
