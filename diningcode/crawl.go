@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/spf13/viper"
@@ -38,11 +39,12 @@ type restaurantInfo struct {
 // Scrape Diningcode
 func (d *diningcode) Crawl() {
 
-	subway := viper.GetStringMapString(`subway`)
-	for _, val := range subway {
+	location := viper.GetStringMapString(`location`)
+	for _, val := range location {
 		for page := 1; page <= 10; page++ {
 
 			// Request the HTML page.
+			log.Printf("query: %s page: %d", val, page)
 			res, err := http.Get("https://www.diningcode.com/list.php?query=" + val + "&page=" + strconv.Itoa(page))
 			if err != nil {
 				log.Fatal(err)
@@ -56,6 +58,10 @@ func (d *diningcode) Crawl() {
 			doc, err := goquery.NewDocumentFromReader(res.Body)
 			if err != nil {
 				log.Fatal(err)
+			}
+
+			if doc.Find("#div_list li").Length() == 0 {
+				log.Fatal(doc.Find("body").Html())
 			}
 
 			// Find the restaurant items
@@ -74,9 +80,14 @@ func (d *diningcode) Crawl() {
 
 					point = strings.Split(point, "점")[0]
 
-					d.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address, AddressDetail: addressDetail})
+					err := d.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address, AddressDetail: addressDetail})
+					if err != nil {
+						log.Fatal(err)
+					}
 				}
 			})
+
+			time.Sleep(time.Second * 5)
 		}
 	}
 }

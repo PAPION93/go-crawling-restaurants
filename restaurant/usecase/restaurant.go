@@ -17,7 +17,12 @@ func NewRestaurantUsecase(r domain.RestaurantRepository) domain.RestaurantUsecas
 }
 
 func (r *restaurantUsecase) Create(restaurant *domain.Restaurant) error {
-	return r.restaurantRepo.Create(restaurant)
+	_, err := r.restaurantRepo.GetRestaurant(restaurant)
+	// if errors.Is(err.Error, gorm.ErrRecordNotFound) {
+	if err != nil {
+		return r.restaurantRepo.Create(restaurant)
+	}
+	return nil
 }
 
 func (r *restaurantUsecase) Update(restaurant *domain.Restaurant) error {
