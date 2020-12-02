@@ -39,12 +39,12 @@ type restaurantInfo struct {
 // Scrape Diningcode
 func (d *diningcode) Crawl() {
 
-	location := viper.GetStringMapString(`location`)
-	for _, val := range location {
+	locations := viper.GetStringMapString(`location`)
+	for _, val := range locations {
 		for page := 1; page <= 10; page++ {
 
 			// Request the HTML page.
-			log.Printf("query: %s page: %d", val, page)
+			log.Println("https://www.diningcode.com/list.php?query=" + val + "&page=" + strconv.Itoa(page))
 			res, err := http.Get("https://www.diningcode.com/list.php?query=" + val + "&page=" + strconv.Itoa(page))
 			if err != nil {
 				log.Fatal(err)
@@ -52,6 +52,7 @@ func (d *diningcode) Crawl() {
 			defer res.Body.Close()
 			if res.StatusCode != 200 {
 				log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+				log.Fatal(res.Body)
 			}
 
 			// Load the HTML document
@@ -84,10 +85,12 @@ func (d *diningcode) Crawl() {
 					if err != nil {
 						log.Fatal(err)
 					}
+
+					log.Printf("Name: %s, Point: %s, Address: %s, AddressDetail: %s", name, point, address, addressDetail)
 				}
 			})
 
-			time.Sleep(time.Second * 5)
+			time.Sleep(time.Second * 2)
 		}
 	}
 }
