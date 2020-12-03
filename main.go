@@ -8,8 +8,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
 	"tmwuw.com/database"
-	"tmwuw.com/diningcode"
 	"tmwuw.com/domain"
+	"tmwuw.com/google"
 	"tmwuw.com/restaurant/repository"
 	"tmwuw.com/restaurant/usecase"
 )
@@ -43,7 +43,14 @@ func main() {
 	rr := repository.NewRestaurantRepository(a.DB)
 	ur := usecase.NewRestaurantUsecase(rr)
 
-	diningcodeRepo := diningcode.NewDiningcode(ur)
-	diningcodeRepo.Crawl()
+	// diningcodeRepo := diningcode.NewDiningcode(ur)
+	// diningcodeRepo.Crawl()
+
+	// naverRepo := naver.NewNaver(ur)
+	// naverRepo.Crawl()
+
+	googleRepo := google.NewGoogle(ur)
+	googleRepo.Crawl()
+
 	log.Println("End")
 }

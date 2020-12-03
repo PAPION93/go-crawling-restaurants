@@ -19,7 +19,7 @@ type Restaurant struct {
 }
 
 func (Restaurant) TableName() string {
-	return "dining_restaurants"
+	return "crwaling_restaurants"
 }
 
 type RestaurantUsecase interface {
