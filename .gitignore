@@ -9,3 +9,4 @@ config.json
 .vscode
 *.db
 logfile.txt
+*.log

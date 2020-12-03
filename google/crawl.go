@@ -1,7 +1,6 @@
 package google
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -75,38 +74,36 @@ func (g *google) Crawl() {
 			restaurants, _ := session.FindElements(selenium.ByCSSSelector, ".rlfl__tls > div")
 			for i, element := range restaurants {
 
-				// Name
+				// Name 없을 경우 skip
 				isPresent, err := element.FindElements(selenium.ByCSSSelector, ".dbg0pd > div")
 				if len(isPresent) == 0 {
 					continue
 				}
 
+				// Name
 				nameElement, err := element.FindElement(selenium.ByCSSSelector, ".dbg0pd > div")
 				checkErr(err)
 				name, _ := nameElement.Text()
 
-				isPresent, err = element.FindElements(selenium.ByCSSSelector, ".rllt__details > div:nth-child(1)")
-				var pointElement webdriver.WebElement
-				if len(isPresent) > 0 {
-					pointElement, err = element.FindElement(selenium.ByCSSSelector, ".rllt__details > div:nth-child(1)")
-					checkErr(err)
+				// Point, Address
+				details, err := element.FindElements(selenium.ByCSSSelector, ".rllt__details > div")
+				var point, address string
+				for j, detail := range details {
+					if j == 0 {
+						point, err = detail.Text()
+						if point != "" {
+							point = point[0:3]
+						}
+						checkErr(err)
+					}
+
+					if j == 1 {
+						address, err = detail.Text()
+						address = strings.Trim(address, " ")
+						checkErr(err)
+					}
 				}
-				point, _ := pointElement.Text()
-				point = point[0:3]
-
-				isPresent, err = element.FindElements(selenium.ByCSSSelector, ".rllt__details > div:nth-child(2)")
-				var addressElement webdriver.WebElement
-				if len(isPresent) > 0 {
-					addressElement, err = element.FindElement(selenium.ByCSSSelector, ".rllt__details > div:nth-child(2)")
-					checkErr(err)
-				}
-				address, _ := addressElement.Text()
-				address = strings.Trim(address, " ")
-
-				err = g.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address})
-				checkErr(err)
-
-				fmt.Printf("%d:: name: %s, point: %s, address: %s\n", i, name, point, address)
+				log.Printf("%d:: name: %s, point: %s, address: %s\n", i, name, point, address)
 			}
 
 			isPresent, err := session.FindElements(selenium.ByCSSSelector, ".d6cvqb > a#pnnext")
