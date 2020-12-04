@@ -5,7 +5,7 @@ _*
 .DS_Store
 engine
 bin/
-config.json
+config.*
 .vscode
 *.db
 logfile.txt

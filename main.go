@@ -43,14 +43,14 @@ func main() {
 	rr := repository.NewRestaurantRepository(a.DB)
 	ur := usecase.NewRestaurantUsecase(rr)
 
+	googleRepo := google.NewGoogle(ur)
+	googleRepo.Crawl()
+
 	// diningcodeRepo := diningcode.NewDiningcode(ur)
 	// diningcodeRepo.Crawl()
 
 	// naverRepo := naver.NewNaver(ur)
 	// naverRepo.Crawl()
-
-	googleRepo := google.NewGoogle(ur)
-	googleRepo.Crawl()
 
 	log.Println("End")
 }

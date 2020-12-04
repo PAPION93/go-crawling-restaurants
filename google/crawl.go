@@ -39,7 +39,11 @@ func (g *google) Crawl() {
 	required := webdriver.Capabilities{}
 
 	locations := viper.GetStringMapString(`location`)
-	for _, location := range locations {
+	for loc, location := range locations {
+		if true == checkExist(location) {
+			log.Println(location + " Skip!!!")
+			continue
+		}
 
 		session, err := chromeDriver.NewSession(desired, required)
 		if err != nil {
@@ -60,6 +64,13 @@ func (g *google) Crawl() {
 		// btn.Click()
 
 		// 더보기
+		isPresent, err := session.FindElements(selenium.ByCSSSelector, ".wUrVib")
+		if len(isPresent) == 0 {
+			session.Delete()
+			chromeDriver.Stop()
+			log.Println(location + " 완료!!!(더보기없음)")
+			continue
+		}
 		moreBtn, err := session.FindElement(selenium.ByCSSSelector, ".wUrVib")
 		checkErr(err)
 		moreBtn.Click()
@@ -103,6 +114,13 @@ func (g *google) Crawl() {
 						checkErr(err)
 					}
 				}
+				if address == "" {
+					address = loc
+				}
+
+				// Insert
+				err = g.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address})
+				checkErr(err)
 				log.Printf("%d:: name: %s, point: %s, address: %s\n", i, name, point, address)
 			}
 
@@ -115,7 +133,7 @@ func (g *google) Crawl() {
 			nextButton, err := session.FindElement(selenium.ByCSSSelector, ".d6cvqb > a#pnnext")
 			checkErr(err)
 			nextButton.Click()
-			time.Sleep(10 * time.Second)
+			time.Sleep(8 * time.Second)
 		}
 
 		session.Delete()
@@ -128,4 +146,14 @@ func checkErr(err error) {
 	if err != nil {
 		log.Println(err)
 	}
+}
+
+func checkExist(location string) bool {
+	exceptions := viper.GetStringMapString(`except`)
+	for _, exception := range exceptions {
+		if exception == location {
+			return true
+		}
+	}
+	return false
 }
