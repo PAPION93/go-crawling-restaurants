@@ -81,7 +81,7 @@ func (d *diningcode) Crawl() {
 
 					point = strings.Split(point, "점")[0]
 
-					err := d.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address, AddressDetail: addressDetail})
+					err := d.ru.Create(&domain.Restaurant{Name: name, DiningPoint: point, Address: address, AddressDetail: addressDetail})
 					if err != nil {
 						log.Fatal(err)
 					}

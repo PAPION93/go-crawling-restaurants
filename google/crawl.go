@@ -119,7 +119,7 @@ func (g *google) Crawl() {
 				}
 
 				// Insert
-				err = g.ru.Create(&domain.Restaurant{Name: name, Point: point, Address: address})
+				err = g.ru.Create(&domain.Restaurant{Name: name, GooglePoint: point, Address: address})
 				checkErr(err)
 				log.Printf("%d:: name: %s, point: %s, address: %s\n", i, name, point, address)
 			}

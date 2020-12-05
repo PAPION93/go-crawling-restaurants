@@ -11,7 +11,9 @@ type Tabler interface {
 type Restaurant struct {
 	ID            uint `gorm:"primaryKey"`
 	Name          string
-	Point         string
+	GooglePoint   string
+	DiningPoint   string
+	NaverPoint    string
 	Address       string
 	AddressDetail string
 	CreatedAt     time.Time
@@ -23,12 +25,14 @@ func (Restaurant) TableName() string {
 }
 
 type RestaurantUsecase interface {
+	GetLimit(page int, size int) ([]Restaurant, error)
 	Create(*Restaurant) error
 	Update(*Restaurant) error
 }
 
 type RestaurantRepository interface {
-	GetRestaurant(*Restaurant) (Restaurant, error)
+	GetRestaurant(name string, address string) (Restaurant, error)
+	GetLimit(offset int, size int) ([]Restaurant, error)
 	Create(*Restaurant) error
 	Update(*Restaurant) error
 }

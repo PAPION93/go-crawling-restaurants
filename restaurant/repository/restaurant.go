@@ -13,12 +13,22 @@ func NewRestaurantRepository(DB *gorm.DB) domain.RestaurantRepository {
 	return &RestaurantRepository{DB}
 }
 
-func (r *RestaurantRepository) GetRestaurant(restaurant *domain.Restaurant) (domain.Restaurant, error) {
-	result := r.DB.Model(&domain.Restaurant{}).Where("name = ? AND address = ? ", restaurant.Name, restaurant.Address).First(restaurant)
+func (r *RestaurantRepository) GetRestaurant(name string, address string) (domain.Restaurant, error) {
+	result := r.DB.Model(&domain.Restaurant{}).Where("name = ? AND address = ? ", name, address).First(domain.Restaurant{})
 	if result.Error != nil {
 		return domain.Restaurant{}, result.Error
 	}
 	return domain.Restaurant{}, nil
+}
+
+func (r *RestaurantRepository) GetLimit(offset int, size int) ([]domain.Restaurant, error) {
+	restaurants := []domain.Restaurant{}
+
+	result := r.DB.Offset(offset).Limit(size).Find(&restaurants)
+	if result.Error != nil {
+		return restaurants, result.Error
+	}
+	return restaurants, nil
 }
 
 func (r *RestaurantRepository) Create(restaurant *domain.Restaurant) error {

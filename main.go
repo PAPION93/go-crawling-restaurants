@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"tmwuw.com/database"
 	"tmwuw.com/domain"
-	"tmwuw.com/google"
+	"tmwuw.com/naver"
 	"tmwuw.com/restaurant/repository"
 	"tmwuw.com/restaurant/usecase"
 )
@@ -43,14 +43,14 @@ func main() {
 	rr := repository.NewRestaurantRepository(a.DB)
 	ur := usecase.NewRestaurantUsecase(rr)
 
-	googleRepo := google.NewGoogle(ur)
-	googleRepo.Crawl()
+	// googleRepo := google.NewGoogle(ur)
+	// googleRepo.Crawl()
 
 	// diningcodeRepo := diningcode.NewDiningcode(ur)
 	// diningcodeRepo.Crawl()
 
-	// naverRepo := naver.NewNaver(ur)
-	// naverRepo.Crawl()
+	naverRepo := naver.NewNaver(ur)
+	naverRepo.Crawl()
 
 	log.Println("End")
 }
