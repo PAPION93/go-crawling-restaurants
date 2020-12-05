@@ -10,6 +10,7 @@ type Tabler interface {
 
 type Restaurant struct {
 	ID            uint `gorm:"primaryKey"`
+	Category      string
 	Name          string
 	GooglePoint   string
 	DiningPoint   string
