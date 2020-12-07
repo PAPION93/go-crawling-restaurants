@@ -50,7 +50,8 @@ func main() {
 	// diningcodeRepo.Crawl()
 
 	naverRepo := naver.NewNaver(ur)
-	naverRepo.RequestAddress()
+	// naverRepo.CrawlLocation()
+	naverRepo.CrawlGeoLocation()
 
 	log.Println("End")
 }

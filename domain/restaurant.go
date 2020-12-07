@@ -17,6 +17,8 @@ type Restaurant struct {
 	NaverPoint    string
 	Address       string
 	AddressDetail string
+	Lat           float64
+	Lng           float64
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

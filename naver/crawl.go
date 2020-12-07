@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 // Naver interface
 type Naver interface {
 	CrawlLocation()
-	CrawlGeocoding()
+	CrawlGeoLocation()
 }
 
 type naver struct {
@@ -43,16 +44,16 @@ func (n *naver) CrawlLocation() {
 
 		for _, restaurant := range restaurants {
 			resp := requestLocation(restaurant.Address, restaurant.Name)
-			if false == isWantedData(resp) {
+			if false == hasDaegu(resp) {
 				// time.Sleep(time.Second * 1)
 				resp = requestLocation("대구", restaurant.Name)
-				if false == isWantedData(resp) {
+				if false == hasDaegu(resp) {
 					// time.Sleep(time.Second * 1)
 					resp = requestLocation("대구 "+restaurant.Address, restaurant.Name)
-					if false == isWantedData(resp) {
+					if false == hasDaegu(resp) {
 						// time.Sleep(time.Second * 1)
 						resp = requestLocation("", restaurant.Name)
-						if false == isWantedData(resp) {
+						if false == hasDaegu(resp) {
 							time.Sleep(time.Millisecond * 500)
 							continue
 						}
@@ -69,8 +70,8 @@ func (n *naver) CrawlLocation() {
 	}
 }
 
-// Naver Geocoding Api를 통해 위경도 정보를 가져온다.
-func (n *naver) CrawlGeocoding() {
+// Naver GeoLocation Api를 통해 위경도 정보를 가져온다.
+func (n *naver) CrawlGeoLocation() {
 
 	page := 1
 	for {
@@ -80,22 +81,33 @@ func (n *naver) CrawlGeocoding() {
 			break
 		}
 
-		ch := make(chan common.ResponseLocation)
+		ch := make(chan common.ChannelResponseGeoLocation)
 		for _, restaurant := range restaurants {
-			go requestGeocoding(restaurant.Address, restaurant.AddressDetail, ch)
+			go requestGeoLocation(restaurant.ID, restaurant.Address, restaurant.AddressDetail, ch)
 		}
 
-		// 	err := n.ru.Update(&domain.Restaurant{ID: restaurant.ID, AddressDetail: resp.Items[0].Address, Category: resp.Items[0].Category})
-		// 	checkErr(err)
-		// 	time.Sleep(time.Millisecond * 500)
+		for i := 0; i < len(restaurants); i++ {
+			if resp, success := <-ch; success {
+				if !hasLandNumber(resp) {
+					continue
+				}
+				lat, _ := strconv.ParseFloat(resp.Addresses[0].X, 64)
+				lng, _ := strconv.ParseFloat(resp.Addresses[0].Y, 64)
+				err := n.ru.Update(&domain.Restaurant{ID: resp.RestaurantID, AddressDetail: resp.Addresses[0].JibunAddress, Lat: lat, Lng: lng})
+				checkErr(err)
+			} else {
+				close(ch)
+				break
+			}
+		}
 		page++
+		time.Sleep(time.Second * 1)
 	}
-
 }
 
 func requestLocation(address string, name string) common.ResponseLocation {
 
-	requestURI := createURI(address, name)
+	requestURI := setAddressAPIURI(address, name)
 	req, err := http.NewRequest("GET", requestURI, nil)
 	if err != nil {
 		checkErr(err)
@@ -112,8 +124,6 @@ func requestLocation(address string, name string) common.ResponseLocation {
 	defer resp.Body.Close()
 
 	bytes, _ := ioutil.ReadAll(resp.Body)
-	// str := string(bytes) //바이트를 문자열로
-	// fmt.Println(str)
 
 	var res common.ResponseLocation
 	err = json.Unmarshal(bytes, &res)
@@ -122,16 +132,17 @@ func requestLocation(address string, name string) common.ResponseLocation {
 	return res
 }
 
-func requestGeocoding(address string, addressDetail string, ch chan<- common.ResponseLocation) {
+func requestGeoLocation(restaurantID uint, address string, addressDetail string, ch chan<- common.ChannelResponseGeoLocation) {
 
 	var requestURI string
+
 	if addressDetail != "" {
-		requestURI = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + addressDetail
+		requestURI = setGeoLocationAPIURI(addressDetail)
 	} else {
-		requestURI = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + address
+		requestURI = setGeoLocationAPIURI(address)
 	}
 
-	req, err := http.NewRequest("GET", url.QueryEscape(requestURI), nil)
+	req, err := http.NewRequest("GET", requestURI, nil)
 	if err != nil {
 		checkErr(err)
 	}
@@ -139,6 +150,20 @@ func requestGeocoding(address string, addressDetail string, ch chan<- common.Res
 	req.Header.Add("X-NCP-APIGW-API-KEY-ID", viper.GetString(`secret.X-NCP-APIGW-API-KEY-ID`))
 	req.Header.Add("X-NCP-APIGW-API-KEY", viper.GetString(`secret.X-NCP-APIGW-API-KEY`))
 
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		checkErr(err)
+	}
+	defer resp.Body.Close()
+
+	bytes, _ := ioutil.ReadAll(resp.Body)
+
+	var res common.ResponseGeoLocation
+	err = json.Unmarshal(bytes, &res)
+	checkErr(err)
+
+	ch <- common.ChannelResponseGeoLocation{RestaurantID: restaurantID, ResponseGeoLocation: res}
 }
 
 func checkErr(err error) {
@@ -147,14 +172,23 @@ func checkErr(err error) {
 	}
 }
 
-func createURI(address string, name string) string {
-	query := strings.Trim(address+" "+name, " ")
-	escapedQuery := url.QueryEscape(query)
-	log.Println("https://openapi.naver.com/v1/search/local?query=" + query)
+func setAddressAPIURI(address string, name string) string {
+	escapedQuery := setQueryString(address+" "+name, " ")
 	return "https://openapi.naver.com/v1/search/local?query=" + escapedQuery
 }
 
-func isWantedData(resp common.ResponseLocation) bool {
+func setGeoLocationAPIURI(address string) string {
+	escapedQuery := setQueryString(address, "")
+	return "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + escapedQuery
+}
+
+func setQueryString(address string, name string) (escapedQuery string) {
+	query := strings.Trim(address+" "+name, " ")
+	escapedQuery = url.QueryEscape(query)
+	return
+}
+
+func hasDaegu(resp common.ResponseLocation) bool {
 	if resp.Total == 0 {
 		return false
 	}
@@ -163,5 +197,21 @@ func isWantedData(resp common.ResponseLocation) bool {
 		return false
 	}
 
+	return true
+}
+
+func hasLandNumber(resp common.ChannelResponseGeoLocation) bool {
+	if resp.Status != "OK" {
+		log.Println(resp)
+		return false
+	}
+
+	if resp.Meta.TotalCount == 0 {
+		return false
+	}
+
+	if resp.Addresses[0].AddressElements[7].LongName == "" {
+		return false
+	}
 	return true
 }

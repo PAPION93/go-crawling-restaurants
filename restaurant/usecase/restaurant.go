@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"github.com/jinzhu/gorm"
 	"tmwuw.com/domain"
 )
 
@@ -47,5 +48,9 @@ func (r *restaurantUsecase) Create(restaurant *domain.Restaurant) error {
 }
 
 func (r *restaurantUsecase) Update(restaurant *domain.Restaurant) error {
+	if restaurant.ID < 0 {
+		return gorm.ErrRecordNotFound
+	}
+
 	return r.restaurantRepo.Update(restaurant)
 }

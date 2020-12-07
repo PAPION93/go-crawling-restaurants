@@ -46,7 +46,7 @@ func (r *RestaurantRepository) Create(restaurant *domain.Restaurant) error {
 
 // Update update
 func (r *RestaurantRepository) Update(restaurant *domain.Restaurant) error {
-	result := r.DB.Model(&domain.Restaurant{}).Select("Category", "AddressDetail", "UpdatedAt").Where("ID = ?", restaurant.ID).Save(&restaurant)
+	result := r.DB.Model(&domain.Restaurant{}).Where("ID = ?", restaurant.ID).Updates(restaurant)
 	if result.Error != nil {
 		return result.Error
 	}

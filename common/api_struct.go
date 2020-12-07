@@ -13,8 +13,8 @@ type ResponseLocation struct {
 	}
 }
 
-// ResponseGeocoding is Response struct from Naver Geocoding Api
-type ResponseGeocoding struct {
+// ResponseGeoLocation is Response struct from Naver Geocoding Api
+type ResponseGeoLocation struct {
 	Status string
 	Meta   struct {
 		TotalCount int
@@ -33,7 +33,12 @@ type ResponseGeocoding struct {
 		}
 		X        string
 		Y        string
-		Distance int
+		Distance float32
 	}
 	ErrorMessage string
+}
+
+type ChannelResponseGeoLocation struct {
+	RestaurantID uint
+	ResponseGeoLocation
 }
