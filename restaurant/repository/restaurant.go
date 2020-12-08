@@ -17,7 +17,7 @@ func NewRestaurantRepository(DB *gorm.DB) domain.RestaurantRepository {
 
 // GetRestaurant get By name and address
 func (r *RestaurantRepository) GetRestaurant(name string, address string) (domain.Restaurant, error) {
-	result := r.DB.Model(&domain.Restaurant{}).Where("name = ? AND address = ?", name, address).First(domain.Restaurant{})
+	result := r.DB.Model(&domain.Restaurant{}).Where("name = ? AND address = ?", name, address).First(&domain.Restaurant{})
 	if result.Error != nil {
 		return domain.Restaurant{}, result.Error
 	}

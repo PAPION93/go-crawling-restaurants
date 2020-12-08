@@ -48,7 +48,7 @@ func (r *restaurantUsecase) Create(restaurant *domain.Restaurant) error {
 }
 
 func (r *restaurantUsecase) Update(restaurant *domain.Restaurant) error {
-	if restaurant.ID < 0 {
+	if restaurant.ID < 1 {
 		return gorm.ErrRecordNotFound
 	}
 

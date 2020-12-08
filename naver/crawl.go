@@ -34,9 +34,9 @@ func NewNaver(ru domain.RestaurantUsecase) Naver {
 
 // Naver 지역검색 API를 통해 음식점의 주소와 카테고리를 가져온다.
 func (n *naver) CrawlLocation() {
-	page := 1
+	page := 100
 	for {
-		restaurants, err := n.ru.GetLimit(page, 1)
+		restaurants, err := n.ru.GetLimit(page, 100)
 		checkErr(err)
 		if len(restaurants) == 0 {
 			break
@@ -45,28 +45,21 @@ func (n *naver) CrawlLocation() {
 		for _, restaurant := range restaurants {
 			resp := requestLocation(restaurant.Address, restaurant.Name)
 			if false == hasDaegu(resp) {
-				// time.Sleep(time.Second * 1)
-				resp = requestLocation("대구", restaurant.Name)
+				resp = requestLocation("대구 "+restaurant.Address, restaurant.Name)
 				if false == hasDaegu(resp) {
-					// time.Sleep(time.Second * 1)
-					resp = requestLocation("대구 "+restaurant.Address, restaurant.Name)
+					resp = requestLocation("대구", restaurant.Name)
 					if false == hasDaegu(resp) {
-						// time.Sleep(time.Second * 1)
-						resp = requestLocation("", restaurant.Name)
-						if false == hasDaegu(resp) {
-							time.Sleep(time.Millisecond * 500)
-							continue
-						}
+						time.Sleep(time.Millisecond * 200)
+						continue
 					}
 				}
 			}
 
 			err := n.ru.Update(&domain.Restaurant{ID: restaurant.ID, AddressDetail: resp.Items[0].Address, Category: resp.Items[0].Category})
 			checkErr(err)
-			time.Sleep(time.Millisecond * 500)
+			time.Sleep(time.Millisecond * 200)
 		}
 		page++
-		break
 	}
 }
 
@@ -173,18 +166,20 @@ func checkErr(err error) {
 }
 
 func setAddressAPIURI(address string, name string) string {
-	escapedQuery := setQueryString(address+" "+name, " ")
+	escapedQuery := setQueryString(address, name)
+	log.Println("setAddressAPIURI: "+address+" "+name, " ")
 	return "https://openapi.naver.com/v1/search/local?query=" + escapedQuery
 }
 
 func setGeoLocationAPIURI(address string) string {
 	escapedQuery := setQueryString(address, "")
+	log.Println("setGeoLocationAPIURI: " + address)
 	return "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode?query=" + escapedQuery
 }
 
-func setQueryString(address string, name string) (escapedQuery string) {
-	query := strings.Trim(address+" "+name, " ")
-	escapedQuery = url.QueryEscape(query)
+func setQueryString(address string, name string) (query string) {
+	query = strings.Trim(address+" "+name, " ")
+	query = url.QueryEscape(query)
 	return
 }
 

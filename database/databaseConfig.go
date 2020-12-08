@@ -6,17 +6,16 @@ import (
 	"time"
 
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
+// Config ...
 type Config struct {
 	DB *gorm.DB
 }
 
-// Opening a database and save the reference to `Config` struct.
+// DBInit is open a database and save the reference to `Config` struct.
 func (d *Config) DBInit() {
 	dbHost := viper.GetString(`database.host`)
 	dbPort := viper.GetString(`database.port`)
@@ -31,10 +30,6 @@ func (d *Config) DBInit() {
 		log.Fatal("db err: ", err)
 	}
 
-	// gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-	// 	return cd.TablePreFix + defaultTableName
-	// }
-
 	db.DB().SetMaxIdleConns(10)
 	db.DB().SetMaxOpenConns(100)
 	db.DB().SetConnMaxLifetime(time.Hour)
@@ -42,7 +37,7 @@ func (d *Config) DBInit() {
 	d.DB = db
 }
 
-// This function will create a temporarily database for running testing cases
+// TestDBInit will create a temporarily database for running testing cases
 func (d *Config) TestDBInit() {
 	//"sqlite3", "file::memory:?mode=memory&cache=shared"
 	// testDb, err := gorm.Open("sqlite3", "file::memory:?mode=memory&cache=shared")
@@ -50,14 +45,15 @@ func (d *Config) TestDBInit() {
 	if err != nil {
 		log.Fatal("db err: ", err)
 	}
+
 	testDb.DB().SetMaxIdleConns(10)
 	testDb.DB().SetMaxOpenConns(100)
 	testDb.DB().SetConnMaxLifetime(time.Hour)
-	// testDb.LogMode(true)
+	testDb.LogMode(true)
 	d.DB = testDb
 }
 
-// Delete the database after running testing cases.
+// TestDBFree delete the database after running testing cases.
 func (d *Config) TestDBFree(testDb *gorm.DB) error {
 	if err := testDb.Close(); err != nil {
 		return err
@@ -66,11 +62,7 @@ func (d *Config) TestDBFree(testDb *gorm.DB) error {
 	return err
 }
 
-// Using this function to get a connection, you can create your connection pool here.
-// func GetDB() *gorm.DB {
-// 	return DB
-// }
-
+// DBClose ...
 func (d *Config) DBClose(db *gorm.DB) {
 	if err := db.Close(); err != nil {
 		log.Error(err)

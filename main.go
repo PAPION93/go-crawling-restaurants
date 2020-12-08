@@ -4,14 +4,17 @@ import (
 	"log"
 	"os"
 
+	_ "github.com/jinzhu/gorm/dialects/postgres"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"
 	"tmwuw.com/database"
 	"tmwuw.com/domain"
-	"tmwuw.com/naver"
 	"tmwuw.com/restaurant/repository"
 	"tmwuw.com/restaurant/usecase"
+	r_repo "tmwuw.com/restaurant_real/repository"
+	r_usecase "tmwuw.com/restaurant_real/usecase"
 )
 
 func init() {
@@ -49,9 +52,14 @@ func main() {
 	// diningcodeRepo := diningcode.NewDiningcode(ur)
 	// diningcodeRepo.Crawl()
 
-	naverRepo := naver.NewNaver(ur)
+	// naverRepo := naver.NewNaver(ur)
 	// naverRepo.CrawlLocation()
-	naverRepo.CrawlGeoLocation()
+	// naverRepo.CrawlGeoLocation()
+
+	rru := r_repo.NewRestaurantRealRepository(a.DB)
+	rur := r_usecase.NewRestaurantRealUsecase(rru)
+	tranfer := database.NewTransfer(ur, rur)
+	tranfer.TransferData()
 
 	log.Println("End")
 }
